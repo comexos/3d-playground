@@ -1,7 +1,9 @@
 package threed.example
 
+import example.drawMultipleCubes
+import example.drawSceneTriangle
 import org.khronos.webgl.WebGLRenderingContext
-import threed.fitDrawingBufferIntoCanvas
+import webgl.fitDrawingBufferIntoCanvas
 
 
 fun drawExample(gl: WebGLRenderingContext) {
@@ -12,6 +14,9 @@ fun drawExample(gl: WebGLRenderingContext) {
     //drawTriangle(gl)
     //translateTriangle(gl)
     //scaleAndRotateTriangle(gl)
-    rotateCube(gl)
+    //rotateCube(gl)
+
+    //drawSceneTriangle(gl)
+    drawMultipleCubes(gl)
 }
 

@@ -1,8 +1,13 @@
-# User-specific stuff:
-.idea/**/workspace.xml
-.idea/**/tasks.xml
+# IDEA stuff
+.idea/*
+!.idea/runConfigurations/
+*.iml
+out
 
-# IntelliJ
-out/
-.idea/inspectionProfiles/
-.idea/uiDesigner.xml
+# Grade stuff
+build
+.gradle
+
+# macOS stuff
+**/.DS_Store
+
