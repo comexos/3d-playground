@@ -16,11 +16,27 @@ import org.khronos.webgl.WebGLRenderingContext.Companion.STATIC_DRAW
 import org.khronos.webgl.WebGLRenderingContext.Companion.TRIANGLES
 import org.khronos.webgl.WebGLRenderingContext.Companion.UNSIGNED_SHORT
 import org.khronos.webgl.WebGLRenderingContext.Companion.VERTEX_SHADER
+import org.w3c.dom.events.MouseEvent
+import org.w3c.dom.events.WheelEvent
 import threed.*
+import kotlin.browser.document
 import kotlin.browser.window
 
 
 fun drawMultipleCubes(gl: WebGLRenderingContext) {
+
+    var viewMatrixX = 0.0f
+    var viewMatrixY = 0.0f
+    var viewMatrixZ = -15.0f
+
+    var clickPosX = 0
+    var clickPosY = 0
+    var moveCam = false
+    var dragging = false
+
+    val MOUSE_BUTTON_LEFT: Short = 0
+    val MOUSE_BUTTON_MIDDLE: Short = 1
+    val MOUSE_BUTTON_RIGHT: Short = 2
 
     // BEGIN ------- same as RotatingCubeExample -------
     val vertexShaderCode =
@@ -157,7 +173,7 @@ fun drawMultipleCubes(gl: WebGLRenderingContext) {
 
     // END ------- RotatingCubeExample -------
 
-    val viewMatrix = translateMatrix(0.0f, 0.0f, -15.0f) // z:-15f = more distance to the objects
+    var viewMatrix = translateMatrix(viewMatrixX, viewMatrixY, viewMatrixZ) // z:-15f = more distance to the objects
 
     // every model matrix defines different locations of the same cube
     val modelMatrices = arrayOf<Array<Float>>(
@@ -189,6 +205,7 @@ fun drawMultipleCubes(gl: WebGLRenderingContext) {
     }
 
     var timeOld = 0.0
+    var animate = true
     fun animate(time: Double) {
 
         gl.fitDrawingBufferIntoCanvas()
@@ -211,8 +228,94 @@ fun drawMultipleCubes(gl: WebGLRenderingContext) {
 
 
         drawObjects(modelMatrices)
-
-        window.requestAnimationFrame { t -> animate(t) }
+        if (animate)
+            window.requestAnimationFrame { t -> animate(t) }
     }
     window.requestAnimationFrame { time -> animate(time) }
+
+    fun getPositionInCanvas(x: Int, y: Int): Array<Int> {
+        val rect = gl.canvas.getBoundingClientRect()
+        console.log("Left: " + rect.left + ", Top: " + rect.top)
+        var cx = x - rect.left.toInt()
+        var cy = y - rect.top.toInt()
+        if (cx < 0)
+            cx = 0
+        if (cx > rect.right.toInt() - rect.left.toInt())
+            cx = rect.right.toInt() - rect.left.toInt()
+        if (cy < 0)
+            cy = 0
+        if (cy > rect.bottom.toInt() - rect.top.toInt())
+            cy = rect.bottom.toInt() - rect.top.toInt()
+        return arrayOf(cx, cy)
+    }
+
+    fun mouseDown(e: Any) {
+        if (e is MouseEvent) {
+            clickPosX = e.clientX
+            clickPosY = e.clientY
+            if(e.button == MOUSE_BUTTON_RIGHT) { // right mouse button to move cam
+                moveCam = true
+            } else if (e.button == MOUSE_BUTTON_LEFT) { // left mouse button to select an object
+                val (cx, cy) = getPositionInCanvas(clickPosX, clickPosY)
+                console.log("X: " + cx + ", Y: " + cy)
+                dragging = true
+                // 2do: select right object
+                animate = false // just stop animation for now
+            } else if (e.button == MOUSE_BUTTON_MIDDLE) {
+                // do nothing
+            }
+        }
+    }
+
+    fun mouseMove(e: Any) {
+        if (e is MouseEvent) {
+            if(dragging == true) {
+                // 2do: move selected object
+            } else if (moveCam == true) {
+                if(e.clientX < clickPosX)
+                    viewMatrixX += 0.1f
+                if(e.clientY < clickPosY)
+                    viewMatrixY -= 0.1f
+                if(e.clientX > clickPosX)
+                    viewMatrixX -= 0.1f
+                if(e.clientY > clickPosY)
+                    viewMatrixY += 0.1f
+                clickPosX = e.clientX
+                clickPosY = e.clientY
+                viewMatrix = translateMatrix(viewMatrixX, viewMatrixY, viewMatrixZ) // z:-15f = more distance to the objects
+            }
+        }
+    }
+
+    fun mouseUp(e: Any) {
+        if (e is MouseEvent) {
+            if(e.button == MOUSE_BUTTON_LEFT) {
+                dragging = false
+                animate = true
+                window.requestAnimationFrame { time -> animate(time) }
+            }
+            if(e.button == MOUSE_BUTTON_RIGHT) {
+                moveCam = false
+            }
+            if(e.button == MOUSE_BUTTON_MIDDLE) {
+                // do nothing
+            }
+        }
+    }
+
+    fun zoomCam(e: Any) { // zoom in or out camera
+        if (e is WheelEvent) {
+            console.log("Wheel event!" + e.deltaY)
+                viewMatrixZ += (e.deltaY / 100).toFloat()
+            viewMatrix = translateMatrix(viewMatrixX, viewMatrixY, viewMatrixZ) // z:-15f = more distance to the objects
+        }
+    }
+
+    document.addEventListener("mousedown", { e -> mouseDown(e) })
+    document.addEventListener("mousemove", { e -> mouseMove(e) })
+    document.addEventListener("mouseup", { e -> mouseUp(e) })
+    document.addEventListener("mousewheel", { e -> zoomCam(e)})
+    document.addEventListener("touchstart", { console.log("touch started" )})
+    document.addEventListener("touchmove", { console.log("touch moved" )})
+    document.addEventListener("touchend", { console.log("touch ended" )})
 }
